@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <option name="testRunner" value="CHOOSE_PER_TEST" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/navroute-annotations" />
+            <option value="$PROJECT_DIR$/navroute-deeplink" />
+            <option value="$PROJECT_DIR$/navroute-di-koin" />
+            <option value="$PROJECT_DIR$/navroute-ksp" />
+            <option value="$PROJECT_DIR$/navroute-runtime" />
+            <option value="$PROJECT_DIR$/navroute-ui" />
+            <option value="$PROJECT_DIR$/samples" />
+            <option value="$PROJECT_DIR$/samples/app-hilt" />
+            <option value="$PROJECT_DIR$/samples/app-koin" />
+            <option value="$PROJECT_DIR$/samples/feature" />
+            <option value="$PROJECT_DIR$/samples/feature/hilt" />
+            <option value="$PROJECT_DIR$/samples/feature/hilt/api" />
+            <option value="$PROJECT_DIR$/samples/feature/hilt/impl" />
+            <option value="$PROJECT_DIR$/samples/feature/koin" />
+            <option value="$PROJECT_DIR$/samples/feature/koin/api" />
+            <option value="$PROJECT_DIR$/samples/feature/koin/impl" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>

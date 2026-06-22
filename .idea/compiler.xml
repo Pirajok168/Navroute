@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel target="17">
+      <module name="Navroute.app" target="21" />
+      <module name="Navroute.navroute-di-hilt" target="21" />
+      <module name="Navroute.sample-feature-api" target="21" />
+      <module name="Navroute.sample-feature-impl" target="21" />
+      <module name="Navroute.samples.feature-generation" target="21" />
+      <module name="Navroute.samples.feature-koin.api" target="21" />
+      <module name="Navroute.samples.feature-koin.impl" target="21" />
+      <module name="Navroute.samples.feature.api" target="21" />
+      <module name="Navroute.samples.feature.generation" target="21" />
+      <module name="Navroute.samples.feature.impl" target="21" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
