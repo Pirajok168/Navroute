@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -23,7 +24,8 @@ import dev.pirajok.navroute.deeplink.DeepLinkPatternProvider
 import dev.pirajok.navroute.deeplink.DeepLinkResolver
 import dev.pirajok.navroute.runtime.EntryBuilder
 import dev.pirajok.navroute.runtime.NavRouteDestination
-import dev.pirajok.navroute.sample.api.MainScreen
+import dev.pirajok.navroute.sample.hilt.main.api.HiltMainRoute
+import dev.pirajok.navroute.sample.navigation.LocalSampleNavBackStack
 import dev.pirajok.navroute.ui.BottomSheetSceneStrategy
 import dev.pirajok.navroute.ui.ModalNavigationDrawerSceneStrategy
 import dev.pirajok.navroute.ui.theme.NavrouteTheme
@@ -33,10 +35,10 @@ import javax.inject.Inject
 public class MainActivity : ComponentActivity() {
 
     @Inject
-    public lateinit var entryBuilders: Set<EntryBuilder>
+    public lateinit var entryBuilders: Set<@JvmSuppressWildcards EntryBuilder>
 
     @Inject
-    public lateinit var deepLinkProviders: Set<DeepLinkPatternProvider>
+    public lateinit var deepLinkProviders: Set<@JvmSuppressWildcards DeepLinkPatternProvider>
 
     private val pendingDeepLinkRoute: MutableState<NavRouteDestination?> = mutableStateOf(null)
 
@@ -45,7 +47,7 @@ public class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val deepLinkResolver = DeepLinkResolver(deepLinkProviders)
-        val startRoute = deepLinkResolver.resolve(intent) ?: MainScreen
+        val startRoute = deepLinkResolver.resolve(intent) ?: HiltMainRoute
 
         setContent {
             NavrouteTheme {
@@ -89,13 +91,15 @@ private fun NavRouteSampleHost(
         )
     }
 
-    NavDisplay(
-        backStack = backStack,
-        sceneStrategies = sceneStrategies,
-        entryProvider = entryProvider {
-            entryBuilders.forEach { entryBuilder ->
-                entryBuilder()
-            }
-        },
-    )
+    CompositionLocalProvider(LocalSampleNavBackStack provides backStack) {
+        NavDisplay(
+            backStack = backStack,
+            sceneStrategies = sceneStrategies,
+            entryProvider = entryProvider {
+                entryBuilders.forEach { entryBuilder ->
+                    entryBuilder()
+                }
+            },
+        )
+    }
 }

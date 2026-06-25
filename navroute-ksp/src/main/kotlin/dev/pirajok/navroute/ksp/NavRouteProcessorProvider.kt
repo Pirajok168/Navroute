@@ -427,6 +427,17 @@ private class NavRouteProcessor(
             body = body,
             dependencies = Dependencies(true, *entries.flatMap { it.originatingFiles }.distinct().toTypedArray()),
         )
+        generateHiltEntryBuilderFactory(
+            packageName = packageName,
+            hiltModuleName = hiltModuleName,
+            providerName = providerName,
+            registryName = registryName,
+            originatingFiles = entries.flatMap { it.originatingFiles }.distinct(),
+        )
+        generateHiltAggregatedDeps(
+            moduleQualifiedName = "$packageName.$hiltModuleName",
+            originatingFiles = entries.flatMap { it.originatingFiles }.distinct(),
+        )
     }
 
     private fun generateKoinEntryBuilderModule(packageName: String, entries: List<EntryModel>) {
@@ -564,6 +575,118 @@ private class NavRouteProcessor(
             body = body,
             dependencies = Dependencies(true, *routes.mapNotNull { it.originatingFile }.distinct().toTypedArray()),
         )
+        generateHiltDeepLinkPatternProviderFactory(
+            packageName = packageName,
+            hiltModuleName = hiltModuleName,
+            providerName = providerName,
+            providerMethodName = providerMethodName,
+            originatingFiles = routes.mapNotNull { it.originatingFile }.distinct(),
+        )
+        generateHiltAggregatedDeps(
+            moduleQualifiedName = "$packageName.$hiltModuleName",
+            originatingFiles = routes.mapNotNull { it.originatingFile }.distinct(),
+        )
+    }
+
+    private fun generateHiltEntryBuilderFactory(
+        packageName: String,
+        hiltModuleName: String,
+        providerName: String,
+        registryName: String,
+        originatingFiles: List<KSFile>,
+    ) {
+        val factoryName = "${hiltModuleName}_${providerName.replaceFirstChar { it.uppercaseChar() }}Factory"
+        val body = buildString {
+            appendLine("package $packageName;")
+            appendLine()
+            appendLine("import androidx.navigation3.runtime.EntryProviderScope;")
+            appendLine("import androidx.navigation3.runtime.NavKey;")
+            appendLine("import dagger.internal.Preconditions;")
+            appendLine("import javax.annotation.processing.Generated;")
+            appendLine("import kotlin.Unit;")
+            appendLine("import kotlin.jvm.functions.Function1;")
+            appendLine()
+            appendLine("@Generated(\"dev.pirajok.navroute.ksp.NavRouteProcessor\")")
+            appendLine("public final class $factoryName {")
+            appendLine("    private $factoryName() {}")
+            appendLine()
+            appendLine("    public static Function1<EntryProviderScope<NavKey>, Unit> $providerName() {")
+            appendLine("        return Preconditions.checkNotNullFromProvides($registryName.INSTANCE.getEntryBuilder());")
+            appendLine("    }")
+            appendLine("}")
+        }
+
+        writeSource(
+            packageName = packageName,
+            fileName = factoryName,
+            body = body,
+            dependencies = Dependencies(true, *originatingFiles.toTypedArray()),
+            extensionName = "java",
+        )
+    }
+
+    private fun generateHiltDeepLinkPatternProviderFactory(
+        packageName: String,
+        hiltModuleName: String,
+        providerName: String,
+        providerMethodName: String,
+        originatingFiles: List<KSFile>,
+    ) {
+        val factoryName = "${hiltModuleName}_${providerMethodName.replaceFirstChar { it.uppercaseChar() }}Factory"
+        val body = buildString {
+            appendLine("package $packageName;")
+            appendLine()
+            appendLine("import dagger.internal.Preconditions;")
+            appendLine("import dev.pirajok.navroute.deeplink.DeepLinkPatternProvider;")
+            appendLine("import javax.annotation.processing.Generated;")
+            appendLine()
+            appendLine("@Generated(\"dev.pirajok.navroute.ksp.NavRouteProcessor\")")
+            appendLine("public final class $factoryName {")
+            appendLine("    private $factoryName() {}")
+            appendLine()
+            appendLine("    public static DeepLinkPatternProvider $providerMethodName() {")
+            appendLine("        return Preconditions.checkNotNullFromProvides($providerName.INSTANCE);")
+            appendLine("    }")
+            appendLine("}")
+        }
+
+        writeSource(
+            packageName = packageName,
+            fileName = factoryName,
+            body = body,
+            dependencies = Dependencies(true, *originatingFiles.toTypedArray()),
+            extensionName = "java",
+        )
+    }
+
+    private fun generateHiltAggregatedDeps(
+        moduleQualifiedName: String,
+        originatingFiles: List<KSFile>,
+    ) {
+        val className = "_${moduleQualifiedName.replace('.', '_')}"
+        val body = buildString {
+            appendLine("package hilt_aggregated_deps;")
+            appendLine()
+            appendLine("import dagger.hilt.processor.internal.aggregateddeps.AggregatedDeps;")
+            appendLine("import javax.annotation.processing.Generated;")
+            appendLine()
+            appendLine("@AggregatedDeps(")
+            appendLine("    components = \"dagger.hilt.components.SingletonComponent\",")
+            appendLine("    modules = \"$moduleQualifiedName\"")
+            appendLine(")")
+            appendLine("@Generated(\"dev.pirajok.navroute.ksp.NavRouteProcessor\")")
+            appendLine("public final class $className {")
+            appendLine("    private $className() {}")
+            appendLine("}")
+        }
+
+        writeSource(
+            packageName = "hilt_aggregated_deps",
+            fileName = className,
+            body = body,
+            dependencies = Dependencies(true, *originatingFiles.toTypedArray()),
+            extensionName = "java",
+        )
     }
 
     private fun generateKoinDeepLinkPatternProviderModule(packageName: String, routes: List<RouteModel>) {
@@ -595,11 +718,18 @@ private class NavRouteProcessor(
         )
     }
 
-    private fun writeSource(packageName: String, fileName: String, body: String, dependencies: Dependencies) {
+    private fun writeSource(
+        packageName: String,
+        fileName: String,
+        body: String,
+        dependencies: Dependencies,
+        extensionName: String = "kt",
+    ) {
         codeGenerator.createNewFile(
             dependencies = dependencies,
             packageName = packageName,
             fileName = fileName,
+            extensionName = extensionName,
         ).use { output ->
             OutputStreamWriter(output, Charsets.UTF_8).use { writer ->
                 writer.write(body)

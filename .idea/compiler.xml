@@ -11,7 +11,11 @@
       <module name="Navroute.samples.feature-koin.impl" target="21" />
       <module name="Navroute.samples.feature.api" target="21" />
       <module name="Navroute.samples.feature.generation" target="21" />
+      <module name="Navroute.samples.feature.hilt.api" target="21" />
+      <module name="Navroute.samples.feature.hilt.impl" target="21" />
       <module name="Navroute.samples.feature.impl" target="21" />
+      <module name="Navroute.samples.feature.koin.api" target="21" />
+      <module name="Navroute.samples.feature.koin.impl" target="21" />
     </bytecodeTargetLevel>
   </component>
 </project>

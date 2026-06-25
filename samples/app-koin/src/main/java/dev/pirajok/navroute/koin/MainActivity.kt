@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -22,7 +23,8 @@ import dev.pirajok.navroute.deeplink.DeepLinkResolver
 import dev.pirajok.navroute.di.koin.NavRouteKoinRegistry
 import dev.pirajok.navroute.di.koin.getNavRouteKoinRegistry
 import dev.pirajok.navroute.runtime.NavRouteDestination
-import dev.pirajok.navroute.sample.koin.api.KoinMainScreen
+import dev.pirajok.navroute.sample.koin.main.api.KoinMainRoute
+import dev.pirajok.navroute.sample.navigation.LocalSampleNavBackStack
 import dev.pirajok.navroute.ui.BottomSheetSceneStrategy
 import dev.pirajok.navroute.ui.ModalNavigationDrawerSceneStrategy
 import org.koin.android.ext.android.getKoin
@@ -42,7 +44,7 @@ public class MainActivity : ComponentActivity() {
 
         navRouteRegistry = getKoin().getNavRouteKoinRegistry()
         val deepLinkResolver = DeepLinkResolver(navRouteRegistry.deepLinkPatternProviders)
-        val startRoute = deepLinkResolver.resolve(intent) ?: KoinMainScreen
+        val startRoute = deepLinkResolver.resolve(intent) ?: KoinMainRoute
         val entryProvider = getEntryProvider<NavKey>()
 
         setContent {
@@ -88,9 +90,11 @@ private fun NavRouteKoinSampleHost(
         )
     }
 
-    NavDisplay(
-        backStack = backStack,
-        sceneStrategies = sceneStrategies,
-        entryProvider = entryProvider,
-    )
+    CompositionLocalProvider(LocalSampleNavBackStack provides backStack) {
+        NavDisplay(
+            backStack = backStack,
+            sceneStrategies = sceneStrategies,
+            entryProvider = entryProvider,
+        )
+    }
 }

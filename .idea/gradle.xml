@@ -20,11 +20,20 @@
             <option value="$PROJECT_DIR$/samples/app-koin" />
             <option value="$PROJECT_DIR$/samples/feature" />
             <option value="$PROJECT_DIR$/samples/feature/hilt" />
-            <option value="$PROJECT_DIR$/samples/feature/hilt/api" />
-            <option value="$PROJECT_DIR$/samples/feature/hilt/impl" />
+            <option value="$PROJECT_DIR$/samples/feature/hilt/detail" />
+            <option value="$PROJECT_DIR$/samples/feature/hilt/detail/api" />
+            <option value="$PROJECT_DIR$/samples/feature/hilt/detail/impl" />
+            <option value="$PROJECT_DIR$/samples/feature/hilt/main" />
+            <option value="$PROJECT_DIR$/samples/feature/hilt/main/api" />
+            <option value="$PROJECT_DIR$/samples/feature/hilt/main/impl" />
             <option value="$PROJECT_DIR$/samples/feature/koin" />
-            <option value="$PROJECT_DIR$/samples/feature/koin/api" />
-            <option value="$PROJECT_DIR$/samples/feature/koin/impl" />
+            <option value="$PROJECT_DIR$/samples/feature/koin/detail" />
+            <option value="$PROJECT_DIR$/samples/feature/koin/detail/api" />
+            <option value="$PROJECT_DIR$/samples/feature/koin/detail/impl" />
+            <option value="$PROJECT_DIR$/samples/feature/koin/main" />
+            <option value="$PROJECT_DIR$/samples/feature/koin/main/api" />
+            <option value="$PROJECT_DIR$/samples/feature/koin/main/impl" />
+            <option value="$PROJECT_DIR$/samples/navigation" />
           </set>
         </option>
       </GradleProjectSettings>
