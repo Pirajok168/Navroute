@@ -2,6 +2,7 @@ package dev.pirajok.navroute.deeplink
 
 import dev.pirajok.navroute.runtime.NavRouteDestination
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerializationException
 
 public class DeepLinkMatcher<T : NavRouteDestination>(
     private val request: DeepLinkRequest,
@@ -55,4 +56,15 @@ public data class DeepLinkMatchResult<T : NavRouteDestination>(
 ) {
     public fun toRoute(): T =
         serializer.deserialize(KeyDecoder(arguments))
+
+    public fun toRouteOrNull(): T? =
+        try {
+            toRoute()
+        } catch (_: IllegalArgumentException) {
+            null
+        } catch (_: IllegalStateException) {
+            null
+        } catch (_: SerializationException) {
+            null
+        }
 }

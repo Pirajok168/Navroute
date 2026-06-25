@@ -1,8 +1,6 @@
 package dev.pirajok.navroute.koin
 
 import android.app.Application
-import dev.pirajok.navroute.sample.generation.generated.generatedSampleGenerationDeepLinkPatternProviderKoinModule
-import dev.pirajok.navroute.sample.generation.generated.generatedSampleGenerationEntryBuilderKoinModule
 import dev.pirajok.navroute.sample.koin.impl.generated.generatedSampleKoinDeepLinkPatternProviderKoinModule
 import dev.pirajok.navroute.sample.koin.impl.generated.generatedSampleKoinEntryBuilderKoinModule
 import org.koin.android.ext.koin.androidContext
@@ -14,8 +12,6 @@ public class NavRouteKoinSampleApplication : Application() {
         startKoin {
             androidContext(this@NavRouteKoinSampleApplication)
             modules(
-                generatedSampleGenerationEntryBuilderKoinModule,
-                generatedSampleGenerationDeepLinkPatternProviderKoinModule,
                 generatedSampleKoinEntryBuilderKoinModule,
                 generatedSampleKoinDeepLinkPatternProviderKoinModule,
             )

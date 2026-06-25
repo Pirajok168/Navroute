@@ -7,6 +7,7 @@ import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
+import com.google.devtools.ksp.validate
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -34,20 +35,21 @@ private class NavRouteProcessor(
     private val options: Map<String, String>,
 ) : SymbolProcessor {
 
-    private var processed = false
+    private val processedEntries = mutableSetOf<String>()
+    private val collectedEntries = mutableListOf<EntryModel>()
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        if (processed) return emptyList()
-        processed = true
-
-        val diMode = validateDiMode()
-
         val entryDeclarations = resolver
             .getSymbolsWithAnnotation(NAV_ENTRY_ANNOTATION)
             .filterIsInstance<KSFunctionDeclaration>()
             .toList()
+        val deferredEntries = entryDeclarations.filterNot { it.validate() }
 
-        val entryModels = entryDeclarations.mapNotNull { entry ->
+        val processableEntries = entryDeclarations
+            .filter { it.validate() }
+            .filterNot { entry -> entry.entryId in processedEntries }
+
+        val entryModels = processableEntries.mapNotNull { entry ->
             val routeDeclaration = entry.navEntryRouteDeclaration()
             if (routeDeclaration == null || routeDeclaration.qualifiedName?.asString() == GENERATED_ROUTE_MARKER_FQ_NAME) {
                 createGeneratedEntryModel(entry)
@@ -55,6 +57,15 @@ private class NavRouteProcessor(
                 createDeclaredEntryModel(resolver, entry, routeDeclaration)
             }
         }
+        collectedEntries += entryModels
+        processedEntries += processableEntries.map { it.entryId }
+
+        return deferredEntries
+    }
+
+    override fun finish() {
+        val diMode = validateDiMode()
+        val entryModels = collectedEntries
 
         val duplicateRoutes = entryModels
             .groupBy { it.route.qualifiedName }
@@ -81,8 +92,6 @@ private class NavRouteProcessor(
                     else -> Unit
                 }
             }
-
-        return emptyList()
     }
 
     private fun validateDiMode(): DiMode? {
@@ -126,6 +135,15 @@ private class NavRouteProcessor(
 
         val parametersByName = route.parameters.associateBy { it.name }
         route.deepLinks.forEach { deepLink ->
+            val syntaxError = deepLink.syntaxError
+            if (syntaxError != null) {
+                logger.error(
+                    "NavRoute: deep link '${deepLink.uriPattern}' has invalid argument syntax: $syntaxError.",
+                    node,
+                )
+                return@forEach
+            }
+
             deepLink.pathArgumentNames.forEach { argumentName ->
                 val parameter = parametersByName[argumentName]
                 if (parameter == null) {
@@ -228,13 +246,33 @@ private class NavRouteProcessor(
     }
 
     private fun validateEntry(entry: KSFunctionDeclaration): Boolean {
+        if (entry.parentDeclaration != null) {
+            logger.error("NavRoute: @NavEntry function '${entry.simpleName.asString()}' must be top-level.", entry)
+            return false
+        }
+
         if (Modifier.PRIVATE in entry.modifiers) {
             logger.error("NavRoute: @NavEntry function '${entry.simpleName.asString()}' must be visible to generated code.", entry)
             return false
         }
 
+        if (Modifier.SUSPEND in entry.modifiers) {
+            logger.error("NavRoute: @NavEntry function '${entry.simpleName.asString()}' must not be suspend.", entry)
+            return false
+        }
+
         if (!entry.hasAnnotation(COMPOSABLE_ANNOTATION)) {
             logger.error("NavRoute: @NavEntry function '${entry.simpleName.asString()}' must be annotated with @Composable.", entry)
+            return false
+        }
+
+        if (entry.extensionReceiver != null) {
+            logger.error("NavRoute: @NavEntry function '${entry.simpleName.asString()}' must not be an extension function.", entry)
+            return false
+        }
+
+        if (entry.typeParameters.isNotEmpty()) {
+            logger.error("NavRoute: @NavEntry function '${entry.simpleName.asString()}' must not declare type parameters.", entry)
             return false
         }
 
@@ -731,11 +769,17 @@ private class NavRouteProcessor(
     private data class DeepLinkModel(
         val uriPattern: String,
     ) {
+        val syntaxError: String? = validatePathArgumentSyntax()
+
         val pathArgumentNames: Set<String> =
-            PATH_ARGUMENT_PATTERN
-                .findAll(uriPattern.substringBefore('?'))
-                .map { match -> match.groupValues[1] }
-                .toSet()
+            if (syntaxError == null) {
+                PATH_ARGUMENT_PATTERN
+                    .findAll(uriPattern.substringBefore('?'))
+                    .map { match -> match.groupValues[1] }
+                    .toSet()
+            } else {
+                emptySet()
+            }
 
         val queryParameterNames: Set<String> =
             uriPattern
@@ -746,6 +790,32 @@ private class NavRouteProcessor(
                     query.substringBefore('=').takeIf { it.isNotBlank() }
                 }
                 .toSet()
+
+        private fun validatePathArgumentSyntax(): String? {
+            val path = uriPattern.substringBefore('?')
+            var index = 0
+            while (index < path.length) {
+                when (path[index]) {
+                    '{' -> {
+                        val closingIndex = path.indexOf('}', startIndex = index + 1)
+                        if (closingIndex == -1) {
+                            return "path arguments must use the form '{argumentName}'"
+                        }
+                        val argumentName = path.substring(index + 1, closingIndex)
+                        if (argumentName.isBlank() || '{' in argumentName || '}' in argumentName) {
+                            return "path arguments must use the form '{argumentName}'"
+                        }
+                        if (!ROUTE_ARGUMENT_NAME_PATTERN.matches(argumentName)) {
+                            return "path argument '{$argumentName}' is not a valid Kotlin parameter name"
+                        }
+                        index = closingIndex
+                    }
+                    '}' -> return "path arguments must use the form '{argumentName}'"
+                }
+                index++
+            }
+            return null
+        }
     }
 
     private data class StyleModel(
@@ -781,6 +851,7 @@ private class NavRouteProcessor(
         const val MODULE_NAME_OPTION = "navroute.moduleName"
         const val DEFAULT_DESTINATION_FQ_NAME = "dev.pirajok.navroute.runtime.NavRouteDestination"
         val PATH_ARGUMENT_PATTERN = Regex("\\{(.+?)\\}")
+        val ROUTE_ARGUMENT_NAME_PATTERN = Regex("[A-Za-z_][A-Za-z0-9_]*")
         val SUPPORTED_DEEP_LINK_TYPES = setOf(
             "kotlin.String",
             "kotlin.Int",
@@ -797,6 +868,9 @@ private class NavRouteProcessor(
 
 private fun KSDeclaration.hasAnnotation(qualifiedName: String): Boolean =
     annotations.any { it.annotationType.resolve().declaration.qualifiedName?.asString() == qualifiedName }
+
+private val KSFunctionDeclaration.entryId: String
+    get() = qualifiedName?.asString() ?: "${packageName.asString()}.${simpleName.asString()}"
 
 private class ImportCollector(
     private val packageName: String,

@@ -30,6 +30,6 @@ public class DeepLinkResolver(
         val pattern = this as DeepLinkPattern<NavRouteDestination>
         return DeepLinkMatcher(request, pattern)
             .match()
-            ?.toRoute()
+            ?.toRouteOrNull()
     }
 }

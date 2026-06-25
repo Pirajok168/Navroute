@@ -61,7 +61,7 @@ internal fun getTypeParser(kind: SerialKind): TypeParser =
     when (kind) {
         PrimitiveKind.STRING -> { value -> value }
         PrimitiveKind.INT -> String::toInt
-        PrimitiveKind.BOOLEAN -> String::toBoolean
+        PrimitiveKind.BOOLEAN -> String::toBooleanStrict
         PrimitiveKind.BYTE -> String::toByte
         PrimitiveKind.CHAR -> { value ->
             require(value.length == 1) { "Expected a single character, but was '$value'." }

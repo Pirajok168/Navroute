@@ -13,7 +13,7 @@ import dev.pirajok.navroute.ui.BottomSheetDestinationStyle
     DetailBottomSheetRoute::class,
     style = BottomSheetDestinationStyle::class,
     deepLinks = [
-        NavDeepLink(uriPattern = "navroute://detail/}"),
+        NavDeepLink(uriPattern = "navroute://detail"),
     ]
 )
 fun DetailBottomSheet() {

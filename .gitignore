@@ -28,3 +28,4 @@ local.properties
 /samples/feature/hilt/impl/build/
 /samples/feature/koin/api/build/
 /samples/feature/koin/impl/build/
+/.idea/
